@@ -28,58 +28,89 @@ const db = new sqlite3.Database('./clanner.db', (err) => {
 });
 
 // Create tables
-db.run(`
-  CREATE TABLE IF NOT EXISTS users (
-    telegram_id INTEGER PRIMARY KEY,
-    username TEXT NOT NULL,
-    avatar TEXT,
-    coins INTEGER DEFAULT 100,
-    gems INTEGER DEFAULT 10,
-    level INTEGER DEFAULT 1,
-    xp INTEGER DEFAULT 0,
-    wins INTEGER DEFAULT 0,
-    losses INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_active DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+db.serialize(() => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      telegram_id INTEGER PRIMARY KEY,
+      username TEXT NOT NULL,
+      avatar TEXT,
+      coins INTEGER DEFAULT 100,
+      gems INTEGER DEFAULT 10,
+      level INTEGER DEFAULT 1,
+      xp INTEGER DEFAULT 0,
+      wins INTEGER DEFAULT 0,
+      losses INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      last_active DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) console.error('Error creating users table:', err);
+    else console.log('✓ Users table ready');
+  });
 
-db.run(`
-  CREATE TABLE IF NOT EXISTS shop_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    description TEXT,
-    price INTEGER NOT NULL,
-    currency TEXT DEFAULT 'coins',
-    type TEXT,
-    image TEXT,
-    available INTEGER DEFAULT 1
-  )
-`);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS shop_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT,
+      price INTEGER NOT NULL,
+      currency TEXT DEFAULT 'coins',
+      type TEXT,
+      image TEXT,
+      available INTEGER DEFAULT 1
+    )
+  `, (err) => {
+    if (err) console.error('Error creating shop_items table:', err);
+    else {
+      console.log('✓ Shop items table ready');
+      
+      // Insert default shop items only if table is empty
+      db.get('SELECT COUNT(*) as count FROM shop_items', [], (err, row) => {
+        if (!err && row.count === 0) {
+          const items = [
+            [1, 'Золотий аватар', 'Рамка золотого кольору для аватара', 500, 'coins', 'avatar_frame', '🟡'],
+            [2, 'Діамантовий аватар', 'Рамка діамантового кольору', 50, 'gems', 'avatar_frame', '💎'],
+            [3, 'Подвійні монети', '2x монет за 24 години', 300, 'coins', 'boost', '⚡'],
+            [4, 'VIP статус', 'VIP статус на тиждень', 100, 'gems', 'status', '👑'],
+            [5, 'Захист від програшу', 'Захист на одну гру', 200, 'coins', 'protection', '🛡️']
+          ];
+          
+          const stmt = db.prepare('INSERT OR IGNORE INTO shop_items (id, name, description, price, currency, type, image) VALUES (?, ?, ?, ?, ?, ?, ?)');
+          items.forEach(item => stmt.run(item));
+          stmt.finalize(() => console.log('✓ Default shop items inserted'));
+        }
+      });
+    }
+  });
 
-db.run(`
-  CREATE TABLE IF NOT EXISTS user_inventory (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    telegram_id INTEGER,
-    item_id INTEGER,
-    purchased_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (telegram_id) REFERENCES users (telegram_id),
-    FOREIGN KEY (item_id) REFERENCES shop_items (id)
-  )
-`);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS user_inventory (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      telegram_id INTEGER,
+      item_id INTEGER,
+      purchased_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (telegram_id) REFERENCES users (telegram_id),
+      FOREIGN KEY (item_id) REFERENCES shop_items (id)
+    )
+  `, (err) => {
+    if (err) console.error('Error creating user_inventory table:', err);
+    else console.log('✓ User inventory table ready');
+  });
+});
 
-// Insert default shop items
-db.run(`
-  INSERT OR IGNORE INTO shop_items (id, name, description, price, currency, type, image) VALUES
-    (1, 'Золотий аватар', 'Рамка золотого кольору для аватара', 500, 'coins', 'avatar_frame', '🟡'),
-    (2, 'Діамантовий аватар', 'Рамка діамантового кольору', 50, 'gems', 'avatar_frame', '💎'),
-    (3, 'Подвійні монети', '2x монет за 24 години', 300, 'coins', 'boost', '⚡'),
-    (4, 'VIP статус', 'VIP статус на тиждень', 100, 'gems', 'status', '👑'),
-    (5, 'Захист від програшу', 'Захист на одну гру', 200, 'coins', 'protection', '🛡️')
-`);
+// Telegram Bot - with error handling
+if (!process.env.TELEGRAM_BOT_TOKEN) {
+  console.error('❌ FATAL: Telegram Bot Token not provided!');
+  console.error('Please set TELEGRAM_BOT_TOKEN in your environment variables');
+  process.exit(1);
+}
 
-// Telegram Bot
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { 
+  polling: true,
+  onlyFirstMatch: true 
+}).on('polling_error', (error) => {
+  console.error('Telegram polling error:', error.message);
+});
 
 // Bot commands
 bot.onText(/\/start/, async (msg) => {
