@@ -13,7 +13,6 @@ app.use(express.static(path.join(__dirname, "public")));
 const bot = new TelegramBot(process.env.BOT_TOKEN);
 const url = process.env.RENDER_EXTERNAL_URL;
 
-// ===== Webhook =====
 bot.setWebHook(`${url}/bot${process.env.BOT_TOKEN}`);
 
 app.post(`/bot${process.env.BOT_TOKEN}`, (req, res) => {
@@ -29,36 +28,55 @@ let onlineWeb = 0;
 // ===== Реєстрація =====
 bot.onText(/\/start/, (msg) => {
     waiting[msg.from.id] = true;
-    bot.sendMessage(msg.chat.id, "👋 Введіть свій нік для сайту:");
+    bot.sendMessage(msg.chat.id, "👋 Введіть свій нік:");
 });
 
 bot.on("message", (msg) => {
     if (!waiting[msg.from.id]) return;
     if (!msg.text || msg.text.startsWith("/")) return;
 
-    if (users[msg.from.id]) {
-        bot.sendMessage(msg.chat.id, "⚠️ Ви вже зареєстровані.");
-        waiting[msg.from.id] = false;
-        return;
-    }
-
     users[msg.from.id] = {
         tgId: msg.from.id,
         nickname: msg.text,
-        username: msg.from.username,
-        balance: 100
+        balance: 100,
+        status: "Новачок"
     };
 
     waiting[msg.from.id] = false;
-    bot.sendMessage(msg.chat.id, "✅ Реєстрація завершена!");
+
+    bot.sendMessage(msg.chat.id, `✅ Реєстрація завершена!
+💰 Баланс: 100
+🏅 Статус: Новачок`);
 });
 
 // ===== API =====
+
 app.get("/api/stats", (req, res) => {
     res.json({
         total: Object.keys(users).length,
         online: onlineWeb
     });
+});
+
+app.get("/api/leaderboard", (req, res) => {
+    const sorted = Object.values(users)
+        .sort((a, b) => b.balance - a.balance)
+        .slice(0, 10);
+    res.json(sorted);
+});
+
+app.post("/api/play", (req, res) => {
+    const { tgId } = req.body;
+    if (!users[tgId]) return res.json({ error: true });
+
+    users[tgId].balance += 10;
+
+    if (users[tgId].balance >= 500) {
+        users[tgId].status = "Профі";
+        bot.sendMessage(tgId, "🏆 Вітаємо! Ви отримали статус Профі!");
+    }
+
+    res.json(users[tgId]);
 });
 
 // ===== WebSocket Online =====
