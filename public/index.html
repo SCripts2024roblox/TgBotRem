@@ -2,65 +2,135 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Clanner</title>
-<link rel="stylesheet" href="style.css">
+<title>Bot Control Panel</title>
+<style>
+body {
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont;
+  background:#000;
+  color:#fff;
+}
+
+.glass {
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(20px);
+  border-radius:25px;
+  padding:20px;
+  margin:15px;
+  box-shadow:0 8px 30px rgba(255,255,255,0.1);
+}
+
+.container {
+  display:flex;
+  height:100vh;
+}
+
+.sidebar {
+  width:30%;
+  overflow:auto;
+  border-right:1px solid rgba(255,255,255,0.1);
+}
+
+.chat {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+
+.messages {
+  flex:1;
+  overflow:auto;
+}
+
+input, button {
+  background:#111;
+  color:#fff;
+  border:none;
+  padding:10px;
+  border-radius:15px;
+}
+
+button {
+  cursor:pointer;
+}
+</style>
 </head>
 <body>
 
-<div class="glass">
-    <h1>CLANNER</h1>
-    <p>Почніть розмову з ботом <b>@Clanner_bot</b></p>
+<div class="glass" id="botInfo"></div>
 
-    <div class="stats">
-        👥 <span id="total">0</span> |
-        🟢 <span id="online">0</span>
+<div class="container">
+  <div class="sidebar glass" id="chatList"></div>
+  <div class="chat glass">
+    <div class="messages" id="messages"></div>
+    <div>
+      <input id="msgInput" placeholder="Message..." />
+      <button onclick="send()">Send</button>
     </div>
-
-    <div class="buttons">
-        <button onclick="play()">🎮 Грати</button>
-        <button onclick="leaderboard()">🏆 Лідерборд</button>
-    </div>
-
-    <div id="output"></div>
+  </div>
 </div>
 
 <script>
-let tgId = prompt("Введи свій Telegram ID:");
+let currentChat = null;
+let chats = {};
 
-const ws = new WebSocket(location.origin.replace(/^http/, "ws"));
-ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    document.getElementById("online").innerText = data.online;
+async function load() {
+  const res = await fetch("/api/info");
+  const data = await res.json();
+
+  document.getElementById("botInfo").innerHTML = `
+    <h2>${data.bot.username}</h2>
+    <p>ID: ${data.bot.id}</p>
+    <p>Visits: ${data.visits}</p>
+  `;
+
+  chats = data.chats;
+  renderChats();
+}
+
+function renderChats() {
+  const list = document.getElementById("chatList");
+  list.innerHTML = "";
+  Object.values(chats).forEach(chat => {
+    const div = document.createElement("div");
+    div.innerHTML = chat.title;
+    div.onclick = () => openChat(chat.id);
+    list.appendChild(div);
+  });
+}
+
+function openChat(id) {
+  currentChat = id;
+  renderMessages();
+}
+
+function renderMessages() {
+  const box = document.getElementById("messages");
+  box.innerHTML = "";
+  chats[currentChat].messages.forEach(m => {
+    box.innerHTML += `<p><b>${m.from}:</b> ${m.text}</p>`;
+  });
+}
+
+async function send() {
+  const text = document.getElementById("msgInput").value;
+  await fetch("/api/send", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ chatId: currentChat, text })
+  });
+  document.getElementById("msgInput").value="";
+}
+
+const ws = new WebSocket(`ws://${location.host}`);
+ws.onmessage = (event)=>{
+  const data = JSON.parse(event.data);
+  chats = data.chats;
+  renderChats();
+  if(currentChat) renderMessages();
 };
 
-async function loadStats() {
-    const res = await fetch("/api/stats");
-    const data = await res.json();
-    document.getElementById("total").innerText = data.total;
-}
-loadStats();
-setInterval(loadStats, 5000);
-
-async function play() {
-    const res = await fetch("/api/play", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ tgId })
-    });
-    const data = await res.json();
-    document.getElementById("output").innerHTML =
-        `💰 Баланс: ${data.balance}<br>🏅 Статус: ${data.status}`;
-}
-
-async function leaderboard() {
-    const res = await fetch("/api/leaderboard");
-    const data = await res.json();
-    let html = "<h3>🏆 Топ гравців</h3>";
-    data.forEach((u, i) => {
-        html += `${i+1}. ${u.nickname} - ${u.balance}💰<br>`;
-    });
-    document.getElementById("output").innerHTML = html;
-}
+load();
 </script>
 
 </body>
