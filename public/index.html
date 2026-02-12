@@ -12,14 +12,22 @@
     <p>Почніть розмову з ботом <b>@Clanner_bot</b></p>
 
     <div class="stats">
-        <p>👥 Всього: <span id="total">0</span></p>
-        <p>🟢 Онлайн: <span id="online">0</span></p>
+        👥 <span id="total">0</span> |
+        🟢 <span id="online">0</span>
     </div>
+
+    <div class="buttons">
+        <button onclick="play()">🎮 Грати</button>
+        <button onclick="leaderboard()">🏆 Лідерборд</button>
+    </div>
+
+    <div id="output"></div>
 </div>
 
 <script>
-const ws = new WebSocket(location.origin.replace(/^http/, "ws"));
+let tgId = prompt("Введи свій Telegram ID:");
 
+const ws = new WebSocket(location.origin.replace(/^http/, "ws"));
 ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
     document.getElementById("online").innerText = data.online;
@@ -30,9 +38,29 @@ async function loadStats() {
     const data = await res.json();
     document.getElementById("total").innerText = data.total;
 }
-
 loadStats();
 setInterval(loadStats, 5000);
+
+async function play() {
+    const res = await fetch("/api/play", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ tgId })
+    });
+    const data = await res.json();
+    document.getElementById("output").innerHTML =
+        `💰 Баланс: ${data.balance}<br>🏅 Статус: ${data.status}`;
+}
+
+async function leaderboard() {
+    const res = await fetch("/api/leaderboard");
+    const data = await res.json();
+    let html = "<h3>🏆 Топ гравців</h3>";
+    data.forEach((u, i) => {
+        html += `${i+1}. ${u.nickname} - ${u.balance}💰<br>`;
+    });
+    document.getElementById("output").innerHTML = html;
+}
 </script>
 
 </body>
