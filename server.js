@@ -99,18 +99,26 @@ db.serialize(() => {
 });
 
 // Telegram Bot - with error handling
+let bot;
 if (!process.env.TELEGRAM_BOT_TOKEN) {
-  console.error('❌ FATAL: Telegram Bot Token not provided!');
-  console.error('Please set TELEGRAM_BOT_TOKEN in your environment variables');
-  process.exit(1);
+  console.error('❌ WARNING: Telegram Bot Token not provided!');
+  console.error('Bot features will be disabled. Please set TELEGRAM_BOT_TOKEN in environment variables');
+  // Create a dummy bot object to prevent crashes
+  bot = {
+    onText: () => {},
+    sendMessage: () => Promise.resolve(),
+    getUserProfilePhotos: () => Promise.resolve({ total_count: 0 }),
+    getFile: () => Promise.resolve({})
+  };
+} else {
+  bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { 
+    polling: true,
+    onlyFirstMatch: true 
+  }).on('polling_error', (error) => {
+    console.error('Telegram polling error:', error.message);
+  });
+  console.log('✓ Telegram Bot initialized');
 }
-
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { 
-  polling: true,
-  onlyFirstMatch: true 
-}).on('polling_error', (error) => {
-  console.error('Telegram polling error:', error.message);
-});
 
 // Bot commands
 bot.onText(/\/start/, async (msg) => {
