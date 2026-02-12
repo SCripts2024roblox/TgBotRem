@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Clanner Platform</title>
+<title>Clanner</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -10,23 +10,29 @@
 <div class="glass">
     <h1>CLANNER</h1>
     <p>Почніть розмову з ботом <b>@Clanner_bot</b></p>
-    
-    <div id="stats"></div>
+
+    <div class="stats">
+        <p>👥 Всього: <span id="total">0</span></p>
+        <p>🟢 Онлайн: <span id="online">0</span></p>
+    </div>
 </div>
 
 <script>
-async function loadStats() {
-    const res = await fetch("/api/users");
-    const data = await res.json();
+const ws = new WebSocket(location.origin.replace(/^http/, "ws"));
 
-    document.getElementById("stats").innerHTML = `
-        <p>👥 Всього користувачів: ${data.totalUsers}</p>
-        <p>🟢 Онлайн: ${data.online}</p>
-    `;
+ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    document.getElementById("online").innerText = data.online;
+};
+
+async function loadStats() {
+    const res = await fetch("/api/stats");
+    const data = await res.json();
+    document.getElementById("total").innerText = data.total;
 }
 
-setInterval(loadStats, 2000);
 loadStats();
+setInterval(loadStats, 5000);
 </script>
 
 </body>
