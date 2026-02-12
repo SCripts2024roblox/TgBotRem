@@ -9,47 +9,43 @@ const PORT = process.env.PORT || 3000;
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
 let users = {};
+let waitingForNickname = {};
 let onlineUsers = 0;
 
-// Коли користувач пише /start
+// /start
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
+    const userId = msg.from.id;
+
+    waitingForNickname[userId] = true;
 
     bot.sendMessage(chatId, "👋 Введіть свій нік для сайту:");
-
-    bot.once("message", (response) => {
-        if (response.text.startsWith("/")) return;
-
-        const nickname = response.text;
-        const userId = response.from.id;
-        const avatar = `https://t.me/i/userpic/320/${response.from.username}.jpg`;
-
-        users[userId] = {
-            id: userId,
-            nickname: nickname,
-            username: response.from.username,
-            avatar: avatar,
-            online: true,
-            gamesPlayed: 0,
-            balance: 100
-        };
-
-        onlineUsers++;
-        bot.sendMessage(chatId, "✅ Ви зареєстровані на сайті!");
-    });
 });
 
-// API для сайту
-app.get("/api/users", (req, res) => {
-    res.json({
-        totalUsers: Object.keys(users).length,
-        online: onlineUsers,
-        users: users
-    });
-});
+// Ловимо всі повідомлення
+bot.on("message", (msg) => {
+    const userId = msg.from.id;
+    const chatId = msg.chat.id;
 
-app.use(express.static(path.join(__dirname, "public")));
+    if (!waitingForNickname[userId]) return;
+    if (msg.text.startsWith("/")) return;
 
-app.listen(PORT, () => {
-    console.log("Server running on port " + PORT);
+    const nickname = msg.text;
+
+    users[userId] = {
+        id: userId,
+        nickname: nickname,
+        username: msg.from.username,
+        avatar: msg.from.username 
+            ? `https://t.me/i/userpic/320/${msg.from.username}.jpg`
+            : null,
+        online: true,
+        gamesPlayed: 0,
+        balance: 100
+    };
+
+    waitingForNickname[userId] = false;
+    onlineUsers++;
+
+    bot.sendMessage(chatId, "✅ Ви успішно зареєстровані!");
 });
