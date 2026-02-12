@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clanner - Gaming Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <!-- Background -->
+    <div class="bg-container">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="bg-orbs">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="orb orb-3"></div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="glass-panel header">
+            <div class="logo">
+                <div class="logo-icon">C</div>
+                <h1>CLANNER</h1>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-page="home">
+                    <span class="icon">🏠</span>
+                    <span>Головна</span>
+                </button>
+                <button class="nav-btn" data-page="games">
+                    <span class="icon">🎮</span>
+                    <span>Ігри</span>
+                </button>
+                <button class="nav-btn" data-page="shop">
+                    <span class="icon">🛒</span>
+                    <span>Магазин</span>
+                </button>
+                <button class="nav-btn" data-page="leaderboard">
+                    <span class="icon">🏆</span>
+                    <span>Рейтинг</span>
+                </button>
+                <button class="nav-btn" data-page="chat">
+                    <span class="icon">💬</span>
+                    <span>Чат</span>
+                </button>
+            </nav>
+            <div class="user-info" id="userInfo">
+                <div class="connect-prompt">
+                    <div class="pulse-dot"></div>
+                    <span>Не підключено</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Home Page -->
+        <div class="page active" id="home">
+            <div class="welcome-section glass-panel">
+                <div class="welcome-content">
+                    <h2 class="glitch" data-text="WELCOME TO CLANNER">WELCOME TO CLANNER</h2>
+                    <p class="subtitle">Ігровий хаб нового покоління</p>
+                    
+                    <div class="telegram-connect" id="telegramConnect">
+                        <div class="connect-card glass-panel">
+                            <div class="telegram-icon">
+                                <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill="#fff" d="M120,0 C53.8,0 0,53.8 0,120 C0,186.2 53.8,240 120,240 C186.2,240 240,186.2 240,120 C240,53.8 186.2,0 120,0 Z M170.5,81.3 L153.5,170.2 C153.5,170.2 151.1,175.8 145.5,173.1 L103.4,141.7 L86.6,133.5 L57.8,123.3 C57.8,123.3 53.2,121.7 52.9,117.5 C52.5,113.3 58.1,111.5 58.1,111.5 L161.5,72.8 C161.5,72.8 170.5,69.2 170.5,75.5 L170.5,81.3 Z"/>
+                                </svg>
+                            </div>
+                            <h3>Почніть з Telegram</h3>
+                            <p>Розпочніть розмову з ботом для створення профілю</p>
+                            <a href="https://t.me/Clanner_bot" target="_blank" class="btn-primary">
+                                <span>Відкрити @Clanner_bot</span>
+                                <span class="arrow">→</span>
+                            </a>
+                            <div class="or-divider">
+                                <span>або</span>
+                            </div>
+                            <div class="login-form">
+                                <input type="text" id="telegramIdInput" placeholder="Введіть Telegram ID" class="glass-input">
+                                <button onclick="connectUser()" class="btn-secondary">Підключитися</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid" id="statsGrid" style="display: none;">
+                        <div class="stat-card glass-panel">
+                            <div class="stat-icon">⭐</div>
+                            <div class="stat-value" id="userLevel">1</div>
+                            <div class="stat-label">Рівень</div>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <div class="stat-icon">🪙</div>
+                            <div class="stat-value" id="userCoins">0</div>
+                            <div class="stat-label">Монети</div>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <div class="stat-icon">💎</div>
+                            <div class="stat-value" id="userGems">0</div>
+                            <div class="stat-label">Коштовності</div>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <div class="stat-icon">🎯</div>
+                            <div class="stat-value" id="userWinRate">0%</div>
+                            <div class="stat-label">Win Rate</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card glass-panel">
+                    <div class="feature-icon">🎮</div>
+                    <h3>Міні-ігри</h3>
+                    <p>Грайте у захоплюючі ігри та заробляйте винагороди</p>
+                </div>
+                <div class="feature-card glass-panel">
+                    <div class="feature-icon">🛒</div>
+                    <h3>Магазин</h3>
+                    <p>Купуйте унікальні предмети та покращення</p>
+                </div>
+                <div class="feature-card glass-panel">
+                    <div class="feature-icon">👥</div>
+                    <h3>Спільнота</h3>
+                    <p>Спілкуйтеся з іншими гравцями онлайн</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Games Page -->
+        <div class="page" id="games">
+            <div class="page-header glass-panel">
+                <h2>🎮 Міні-ігри</h2>
+                <p>Виберіть гру та почніть заробляти</p>
+            </div>
+
+            <div class="games-grid">
+                <div class="game-card glass-panel" onclick="startGame('rps')">
+                    <div class="game-icon">✊✋✌️</div>
+                    <h3>Камінь-Ножиці-Папір</h3>
+                    <p>Класична гра проти бота</p>
+                    <div class="game-rewards">
+                        <span>+10 🪙</span>
+                        <span>+5 XP</span>
+                    </div>
+                </div>
+
+                <div class="game-card glass-panel" onclick="startGame('number')">
+                    <div class="game-icon">🎲</div>
+                    <h3>Вгадай число</h3>
+                    <p>Вгадайте число від 1 до 10</p>
+                    <div class="game-rewards">
+                        <span>+20 🪙</span>
+                        <span>+10 XP</span>
+                    </div>
+                </div>
+
+                <div class="game-card glass-panel" onclick="startGame('memory')">
+                    <div class="game-icon">🧠</div>
+                    <h3>Пам'ять</h3>
+                    <p>Знайдіть всі пари карт</p>
+                    <div class="game-rewards">
+                        <span>+30 🪙</span>
+                        <span>+15 XP</span>
+                    </div>
+                </div>
+
+                <div class="game-card glass-panel" onclick="startGame('slots')">
+                    <div class="game-icon">🎰</div>
+                    <h3>Слоти</h3>
+                    <p>Випробуйте свою удачу</p>
+                    <div class="game-rewards">
+                        <span>-10 🪙</span>
+                        <span>Джекпот: 1000 🪙</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Modal -->
+            <div id="gameModal" class="modal">
+                <div class="modal-content glass-panel">
+                    <button class="close-btn" onclick="closeGame()">✕</button>
+                    <div id="gameArea"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shop Page -->
+        <div class="page" id="shop">
+            <div class="page-header glass-panel">
+                <h2>🛒 Магазин</h2>
+                <p>Купуйте предмети за монети та коштовності</p>
+            </div>
+
+            <div class="shop-grid" id="shopGrid">
+                <div class="loading">Завантаження...</div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Page -->
+        <div class="page" id="leaderboard">
+            <div class="page-header glass-panel">
+                <h2>🏆 Таблиця лідерів</h2>
+                <p>Топ гравців платформи</p>
+            </div>
+
+            <div class="leaderboard-list glass-panel" id="leaderboardList">
+                <div class="loading">Завантаження...</div>
+            </div>
+        </div>
+
+        <!-- Chat Page -->
+        <div class="page" id="chat">
+            <div class="page-header glass-panel">
+                <h2>💬 Онлайн чат</h2>
+                <div class="online-count">
+                    <div class="pulse-dot"></div>
+                    <span id="onlineCount">0 онлайн</span>
+                </div>
+            </div>
+
+            <div class="chat-container glass-panel">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="system-message">Вітаємо в чаті Clanner!</div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="Введіть повідомлення..." class="glass-input">
+                    <button onclick="sendMessage()" class="btn-send">Надіслати</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script src="/script.js"></script>
+</body>
+</html>
