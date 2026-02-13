@@ -2,33 +2,32 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Bot Control Panel</title>
+<title>Bot Control</title>
 <style>
 body {
   margin:0;
-  font-family:-apple-system,BlinkMacSystemFont;
   background:#000;
-  color:#fff;
+  font-family:-apple-system;
+  color:white;
 }
 
 .glass {
-  background:rgba(255,255,255,0.08);
-  backdrop-filter:blur(20px);
+  background:rgba(255,255,255,0.07);
+  backdrop-filter:blur(25px);
   border-radius:25px;
-  padding:20px;
+  padding:15px;
   margin:15px;
-  box-shadow:0 8px 30px rgba(255,255,255,0.1);
+  box-shadow:0 10px 30px rgba(255,255,255,0.08);
 }
 
 .container {
   display:flex;
-  height:100vh;
+  height:80vh;
 }
 
 .sidebar {
-  width:30%;
+  width:35%;
   overflow:auto;
-  border-right:1px solid rgba(255,255,255,0.1);
 }
 
 .chat {
@@ -42,94 +41,92 @@ body {
   overflow:auto;
 }
 
-input, button {
-  background:#111;
-  color:#fff;
-  border:none;
+input {
+  width:70%;
   padding:10px;
   border-radius:15px;
+  border:none;
+  background:#111;
+  color:white;
 }
 
 button {
-  cursor:pointer;
+  padding:10px;
+  border-radius:15px;
+  border:none;
+  background:white;
+  color:black;
+  font-weight:bold;
 }
 </style>
 </head>
 <body>
 
-<div class="glass" id="botInfo"></div>
+<div class="glass" id="info"></div>
 
 <div class="container">
   <div class="sidebar glass" id="chatList"></div>
   <div class="chat glass">
     <div class="messages" id="messages"></div>
     <div>
-      <input id="msgInput" placeholder="Message..." />
+      <input id="msg" placeholder="Message">
       <button onclick="send()">Send</button>
     </div>
   </div>
 </div>
 
 <script>
-let currentChat = null;
 let chats = {};
+let currentChat = null;
 
 async function load() {
-  const res = await fetch("/api/info");
+  const res = await fetch("/api/data");
   const data = await res.json();
 
-  document.getElementById("botInfo").innerHTML = `
+  document.getElementById("info").innerHTML = `
     <h2>${data.bot.username}</h2>
     <p>ID: ${data.bot.id}</p>
     <p>Visits: ${data.visits}</p>
+    <p>Status: 🟢 ONLINE</p>
   `;
 
   chats = data.chats;
   renderChats();
+  if(currentChat) renderMessages();
 }
 
 function renderChats() {
   const list = document.getElementById("chatList");
   list.innerHTML = "";
-  Object.values(chats).forEach(chat => {
+  Object.values(chats).forEach(c=>{
     const div = document.createElement("div");
-    div.innerHTML = chat.title;
-    div.onclick = () => openChat(chat.id);
+    div.innerHTML = c.title;
+    div.style.padding="10px";
+    div.onclick=()=>{currentChat=c.id;renderMessages();}
     list.appendChild(div);
   });
 }
 
-function openChat(id) {
-  currentChat = id;
-  renderMessages();
-}
-
-function renderMessages() {
-  const box = document.getElementById("messages");
-  box.innerHTML = "";
-  chats[currentChat].messages.forEach(m => {
-    box.innerHTML += `<p><b>${m.from}:</b> ${m.text}</p>`;
+function renderMessages(){
+  const box=document.getElementById("messages");
+  box.innerHTML="";
+  chats[currentChat].messages.forEach(m=>{
+    box.innerHTML+=`<p><b>${m.from}:</b> ${m.text}</p>`;
   });
 }
 
-async function send() {
-  const text = document.getElementById("msgInput").value;
-  await fetch("/api/send", {
+async function send(){
+  const text=document.getElementById("msg").value;
+  await fetch("/api/send",{
     method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ chatId: currentChat, text })
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chatId:currentChat,text})
   });
-  document.getElementById("msgInput").value="";
+  document.getElementById("msg").value="";
+  load();
 }
 
-const ws = new WebSocket(`ws://${location.host}`);
-ws.onmessage = (event)=>{
-  const data = JSON.parse(event.data);
-  chats = data.chats;
-  renderChats();
-  if(currentChat) renderMessages();
-};
-
+setInterval(load,2000);
 load();
 </script>
 
